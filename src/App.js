@@ -55,21 +55,46 @@ function App() {
   }, [fetchMoviesHandler]);
 
   async function addMovieHandler(movie) {
-   const response = await fetch('https://react-post-request-3c49a-default-rtdb.firebaseio.com/movies.json',{
+  try{
+    const response = await fetch('https://react-post-request-3c49a-default-rtdb.firebaseio.com/movies.json',{
       method:'POST',
       body: JSON.stringify(movie),
       headers: {
         'Content-Type': 'application/json'
       }
-    })
+    });
+    if(!response.ok){
+      throw new Error('Failed to add movie');
+    }
     const data = await response.json();
-    
+    const updatedMovies = [...movies,{id: data.name, ...movie }];
+    setMovies(updatedMovies);
+    } catch (error) {
+      setError(error.message);
+    }
   }
+
+  async function deleteMovieHandler(id) {
+    try {
+      const response = await fetch(`https://react-post-request-3c49a-default-rtdb.firebaseio.com/movies/${id}.json`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete movie');
+      }
+
+      const updatedMovies = movies.filter((movie) => movie.id !== id);
+      setMovies(updatedMovies);
+    } catch (error) {
+      setError(error.message);
+    }
+  }  
+  
 
   let content = <p>Found no movies.</p>;
 
   if (movies.length > 0) {
-    content = <MoviesList movies={movies} />;
+    content = <MoviesList movies={movies} onDeleteMovie={deleteMovieHandler}/>;
   }
 
   if (error) {
